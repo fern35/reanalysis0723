@@ -50,7 +50,7 @@ class Analyzer(object):
         document.add_heading('{}_completeness_threshold={}'.format(foldername,threshold), 0)
 
         for ville in villelst:
-            data = pd.read_excel(os.path.abspath(os.path.join(self.datasavedir, 'excel/{}/{}_{}.xlsx'.format(foldername,foldername,ville))))
+            data = pd.read_excel(os.path.join(self.datasavedir, 'excel/{}/{}_{}.xlsx'.format(foldername,foldername,ville)))
             data_groupNAN = self.group_Compl(data, group_dict=group_dict,threshold=threshold)
             plt.clf()
             data_groupNAN.plot(kind='bar',figsize=(3,3),fontsize=8,legend=False)
