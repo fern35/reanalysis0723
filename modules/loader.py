@@ -4,11 +4,11 @@ import pandas as pd
 class Loader(object):
     """docstring for Loader"""
 
-    def __init__(self, datadir=""):
+    def __init__(self, datestr,datadir=""):
         if datadir == "":
             self.basedir = os.path.abspath(os.path.dirname(__file__))
-            self.datadir = os.path.abspath(
-                os.path.join(self.basedir, '..','..', 'data'))
+            self.datadir = os.path.join(self.basedir, '..','..', 'data')
+            self.datasavedir = os.path.join(self.basedir, '..','..', 'data_save{}'.format(datestr))
         else:
             self.datadir = datadir
 
@@ -42,12 +42,13 @@ class Loader(object):
         data_Int.dropna(axis=0, how='all',inplace=True)
         return data_Int
 
-    def load_df(self,foldername='Armoire',filename='Armoire_cluster_merge'):
+    def load_excel(self,foldername,filename):
         """
 
         :param foldername:
         :param filename:
         :return:
         """
-        data = pd.read_excel(os.path.join(self.datadir, foldername,filename))
+        excel_path = os.path.join(self.datasavedir, 'excel')
+        data = pd.read_excel(os.path.join(excel_path, foldername,filename+'.xlsx'))
         return data

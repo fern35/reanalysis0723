@@ -8,6 +8,9 @@ from utils.constants import Armoire_GROUP,Armoire_PICK
 from utils.constants import PL_GROUP,PL_PICK
 from utils.constants import Int_GROUP,Int_PICK
 from utils.constants import VILLE_NAME
+from modules.saver import Saver
+from sklearn.cluster import KMeans
+import numpy as np
 
 class Analyzer(object):
     def __init__(self, datestr, datasavedir=""):
@@ -17,6 +20,7 @@ class Analyzer(object):
                 os.path.join(self.basedir, '..','..','data_save{}'.format(datestr)))
         else:
             self.datasavedir = datasavedir
+        self.saver = Saver(datestr=datestr)
 
     def pick_Var(self,data, Var_lst):
         new_data = data[Var_lst]
@@ -38,12 +42,80 @@ class Analyzer(object):
         stat_data['count_wnNAN'] = data.count()
         stat_data['percentage_wnNAN'] = data.count() / len(data)
         if save:
-            fold_path = os.path.join(self.datasavedir,'excel','{}'.format(foldername))
-            save_path = self.check_savepath(foldpath=fold_path,filename='{}_NAN.xlsx'.format(titlename))
-            writer = pd.ExcelWriter(save_path)
-            stat_data.to_excel(writer, 'Sheet1')
-            writer.save()
+            self.saver.save_excel(data=stat_data,filename='{}_NAN.xlsx'.format(titlename),foldername=foldername)
+            # fold_path = os.path.join(self.datasavedir,'excel','{}'.format(foldername))
+            # save_path = self.check_savepath(foldpath=fold_path,filename='{}_NAN.xlsx'.format(titlename))
+            # writer = pd.ExcelWriter(save_path)
+            # stat_data.to_excel(writer, 'Sheet1')
+            # writer.save()
         return stat_data
+
+    def gen_cat_var(self, data, Var_lst):
+        """
+        check all the categories of the variables of the data
+        :param data:
+        :param Var_lst:
+        :return:
+        """
+        result_data = pd.DataFrame(columns=Var_lst)
+        for var in Var_lst:
+            tp = data[var].value_counts(dropna=False)
+            result_data[var] = pd.Series(tp.index)
+
+        return result_data
+
+    def get_tfvect_feature(self,vectorizer,save=True,foldername='',varname=''):
+        df_feature = pd.DataFrame(columns=['feature','idf'])
+        df_feature['feature'] = vectorizer.get_feature_names()
+        def get_idf(feature):
+            index_feature = vectorizer.vocabulary_[feature]
+            return vectorizer.idf_[index_feature]
+        df_feature['idf'] = df_feature['feature'].apply(get_idf)
+        df_feature.sort_values(by='idf',inplace=True)
+        if save:
+            self.saver.save_excel(data=df_feature,filename='Idf_Analysis_{}.docx'.format(varname),foldername=foldername)
+        return df_feature
+
+    def ana_gapstat_kmeans(self,n_cluster_max,data_matrix,titlename,nrefs=20):
+
+        gaps = np.zeros((len(range(1, n_cluster_max)),))
+        resultsdf = pd.DataFrame({'clusterCount': [], 'gap': []})
+        for gap_index, k in enumerate(range(1, n_cluster_max)):
+            # Holder for reference dispersion results
+            refDisps = np.zeros(nrefs)
+            # For n references, generate random sample and perform kmeans getting resulting dispersion of each loop
+            for i in range(nrefs):
+                # Create new random reference set
+                randomReference = np.random.random_sample(size=data_matrix.shape)
+                # Fit to it
+                km = KMeans(k)
+                km.fit(randomReference)
+                refDisp = km.inertia_
+                refDisps[i] = refDisp
+            # Fit cluster to original data and create dispersion
+            km = KMeans(k)
+            km.fit(data_matrix)
+            origDisp = km.inertia_
+            # Calculate gap statistic
+            gap = np.log(np.mean(refDisps)) - np.log(origDisp)
+            # Assign this loop's gap statistic to gaps
+            gaps[gap_index] = gap
+            resultsdf = resultsdf.append({'clusterCount': k, 'gap': gap}, ignore_index=True)
+
+        optimalK = gaps.argmax() + 1
+
+        plt.plot(resultsdf.clusterCount, resultsdf.gap, linewidth=3)
+        plt.scatter(resultsdf[resultsdf.clusterCount == optimalK].clusterCount, resultsdf[resultsdf.clusterCount == optimalK].gap, s=250, c='r')
+        plt.grid(True)
+        plt.xlabel('Cluster Count')
+        plt.ylabel('Gap Value')
+        plt.title(titlename)
+        fold_path = os.path.join(self.datasavedir, 'img', 'inertia')
+        save_path = self.check_savepath(foldpath=fold_path,filename='{}.jpg'.format(titlename))
+        plt.savefig(save_path)
+        plt.clf()
+
+        return optimalK, resultsdf
 
     def gen_groupCompl_cities(self,foldername='Armoire', villelst=VILLE_NAME,group_dict=Armoire_GROUP,threshold=0.0):
         document = Document()

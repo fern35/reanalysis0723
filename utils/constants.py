@@ -1,5 +1,7 @@
 # list of cities
-VILLE_NAME = ['CAVB','BESSANCOURT','BOGOR','GOUSSAINVILLE','GUADELOUPE','MONTESSON','NOUMEA']
+VILLE_NAME = ['CAVB','BESSANCOURT',
+              # 'BOGOR',
+              'GOUSSAINVILLE','GUADELOUPE','MONTESSON','NOUMEA']
 
 # all the variables of Armoire
 
@@ -133,7 +135,7 @@ Int_GROUP = {'PANNE':Int_PANNE,'Intervention':Int_Intervention}
 #                      'pan_Commentaire',
                      # 'pan_Defaut', 'pan_DelaiInt','pan_NoPLimp'],'Intervention':['int_TypeEqt','int_Debut','int_DateIntervention','int_TypeInt', 'int_ElemDefaut']}
 
-Int_PICK = {'CAT':['pan_TypeEqt','pan_Solde','pan_Defaut','int_TypeEqt','int_ElemDefaut'],'DIST':['pan_DelaiInt','pan_NoPLimp','int_Debut','int_DateIntervention']}
+Int_PICK = {'CAT':['pan_TypeEqt','pan_Solde','pan_Defaut', 'int_Defaut','int_TypeEqt','int_ElemDefaut'],'DIST':['pan_DelaiInt','pan_NoPLimp','int_Debut','int_DateIntervention']}
 
 Int_NAME = Int_PANNE + Int_Intervention
 Int_TIME = ['pan_DateSignal','int_DateIntervention','int_Debut','int_Fin','int_NoPLimp', 'int_Fin']

@@ -3,6 +3,8 @@ from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 import os
 from utils.constants import VILLE_NAME
+from sklearn.feature_extraction.text import TfidfVectorizer
+from nltk.corpus import stopwords
 class Processor(object):
     def __init__(self, datestr,datasavedir=""):
         if datasavedir == "":
@@ -36,8 +38,29 @@ class Processor(object):
         merge_data = merge_data.reset_index( drop=True)
         return merge_data
 
+    def var_vectorize(self,data,vectorizer=TfidfVectorizer(strip_accents='unicode',stop_words=stopwords.words('french'))):
+        # fillna
+        new_data = data.fillna('NA')
+        # remove figures? or replace figures by 0? or keep figures?
+
+        df_vect = vectorizer.fit_transform(new_data)
+        return df_vect,vectorizer
+
+    def NL_encode(self,data, var, vectorizer=TfidfVectorizer(strip_accents='unicode',stop_words=stopwords.words('french'))):
+        """
+        encode NL variables with the personalized vectorizer
+        :param data:
+        :param var:
+        :return:
+        """
+        newdata = data.copy()
+        newdata[var + '_encode'] = self.var_vectorize(data=newdata[var],vectorizer=vectorizer)
+        return newdata
+
+
     def cat_encode(self, data, var, regroup_dict=None):
         """
+        encode categorical variables with the personalized dictionary
         :param data:
         :param var:
         :param one_hot:
@@ -94,7 +117,6 @@ class Processor(object):
         new_data = pd.concat([new_data, df_encoded],axis=1)
 
         return new_data
-
 
     def reorder_Int(self, data, int_num, Var_Cat, Var_Num):
         Var_Cat_encode = Var_Cat.copy()

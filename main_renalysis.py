@@ -12,7 +12,7 @@ from utils.constants import VILLE_NAME,Armoire_NAME,PL_NAME,Int_NAME,Armoire_TIM
 date_str='0723'
 analyzer = Analyzer(datestr=date_str)
 cleaner = Cleaner()
-loader = Loader()
+loader = Loader(datestr=date_str)
 saver = Saver(datestr=date_str)
 processor = Processor(datestr=date_str)
 
@@ -24,7 +24,8 @@ CURRENT_TIME_AP = '2018-05-15'
 CURRENT_TIME_INT = '2018_05_15'
 Intfilename_lst = ["BDDExportInterventions-{} du 01_01_2013 au 15_05_2018.xlsx".format(CURRENT_TIME_INT)]
 
-
+"""Attention: for this project, I dupmp the data of BOGOR
+"""
 """
 Merge the observations of all the cities and save to excel, this will be done by the api later
 The related files are stored in data_save/excel/
@@ -45,16 +46,16 @@ The related files are stored in data_save/excel/
 #     saver.save_excel(data_Arm,foldername='Armoire',filename='Armoire_{}'.format(ville))
 #     saver.save_excel(data_PL,foldername='PL',filename='PL_{}'.format(ville))
 #     saver.save_excel(data_Int,foldername='Int',filename='Int_{}'.format(ville))
-#
-#
-# data_Armoire = processor.merge_file(foldername='Armoire', villelst=VILLE_NAME, add_region=True)
-# saver.save_excel(data_Armoire, foldername='Armoire',filename='Armoire_allcities')
-#
-# data_PL = processor.merge_file(foldername='PL', villelst=VILLE_NAME, add_region=True)
-# saver.save_excel(data_PL, foldername='PL', filename='PL_allcities')
-#
-# data_Int = processor.merge_file(foldername='Int', villelst=VILLE_NAME, add_region=True)
-# saver.save_excel(data_Int, foldername='Int', filename='Int_allcities')
+
+
+data_Armoire = processor.merge_file(foldername='Armoire', villelst=VILLE_NAME, add_region=True)
+saver.save_excel(data_Armoire, foldername='Armoire',filename='Armoire_allcities')
+
+data_PL = processor.merge_file(foldername='PL', villelst=VILLE_NAME, add_region=True)
+saver.save_excel(data_PL, foldername='PL', filename='PL_allcities')
+
+data_Int = processor.merge_file(foldername='Int', villelst=VILLE_NAME, add_region=True)
+saver.save_excel(data_Int, foldername='Int', filename='Int_allcities')
 
 
 """
