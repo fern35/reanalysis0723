@@ -56,7 +56,7 @@ analyzer.get_tfvect_feature(vectorizer=vectorizer_pan_Defaut,varname='pan_Defaut
 analyzer.get_tfvect_feature(vectorizer=vectorizer_int_Defaut,varname='int_Defaut')
 ### kmeans - cluster the doc-term matrix and see the centroids for each cluster
 n_max = 20
-analyzer.ana_gapstat_kmeans(n_cluster_max=20,data_matrix=vect_pan_Defaut,titlename='kmeans_gapstat_pan_Defaut')
-analyzer.ana_gapstat_kmeans(n_cluster_max=20,data_matrix=vect_int_Defaut,titlename='kmeans_gapstat_int_Defaut')
+analyzer.ana_gapstat_kmeans(n_cluster_max=n_max,data_matrix=vect_pan_Defaut,titlename='kmeans_gapstat_pan_Defaut')
+analyzer.ana_gapstat_kmeans(n_cluster_max=n_max,data_matrix=vect_int_Defaut,titlename='kmeans_gapstat_int_Defaut')
 
 

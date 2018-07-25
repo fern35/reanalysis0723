@@ -76,7 +76,7 @@ class Analyzer(object):
             self.saver.save_excel(data=df_feature,filename='Idf_Analysis_{}.docx'.format(varname),foldername=foldername)
         return df_feature
 
-    def ana_gapstat_kmeans(self,n_cluster_max,data_matrix,titlename,nrefs=20):
+    def ana_gapstat_kmeans(self,n_cluster_max,data_matrix,titlename,nrefs=10):
 
         gaps = np.zeros((len(range(1, n_cluster_max)),))
         resultsdf = pd.DataFrame({'clusterCount': [], 'gap': []})
