@@ -22,31 +22,6 @@ class Cluster(object):
         else:
             self.datasavedir = datasavedir
 
-    def merge_file(self, foldername='Armoire', villelst=VILLE_NAME, add_region=True, Var_lst=None):
-        # retrieve the column names
-        fold_path = os.path.join(self.datasavedir, 'excel','{}'.format(foldername))
-        data_forcol = pd.read_excel(
-            os.path.join(fold_path,'{}_{}.xlsx'.format( foldername, villelst[0])))
-        # get the names of columns
-        merge_data = pd.DataFrame(columns=data_forcol.columns)
-
-        for ville in villelst:
-            data_tp = pd.read_excel(
-                os.path.join(fold_path,'{}_{}.xlsx'.format( foldername, ville)))
-            # because the column 'commune' in the database
-            data_tp['region'] = ville
-            merge_data = pd.concat([merge_data, data_tp])
-
-        if Var_lst is not None:
-            merge_data = merge_data[Var_lst+['region']]
-        if not add_region:
-            merge_data.drop(['region'], axis=1, inplace=True)
-
-        merge_data.drop_duplicates(inplace=True)
-        merge_data = merge_data.reset_index( drop=True)
-        return merge_data
-
-
     def add_Int(self, data_row, data_Int, int_num=3,Var_Cat= {'pan_Solde':3, 'int_Solde':4}, Var_Num=['pan_DateSignal','int_DateIntervention','int_Fin']):
         """
 

@@ -42,7 +42,7 @@ class Loader(object):
         data_Int.dropna(axis=0, how='all',inplace=True)
         return data_Int
 
-    def load_excel(self,foldername,filename):
+    def load_excel(self,filename,foldername=''):
         """
 
         :param foldername:

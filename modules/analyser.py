@@ -11,6 +11,9 @@ from utils.constants import VILLE_NAME
 from modules.saver import Saver
 from sklearn.cluster import KMeans
 import numpy as np
+import re
+import string
+import seaborn as sns
 
 class Analyzer(object):
     def __init__(self, datestr, datasavedir=""):
@@ -36,18 +39,14 @@ class Analyzer(object):
             pass
         return save_path
 
-    def gen_NAN_excel(self,data,foldername='Armoire_arm',titlename='Armoire_arm',save=True):
+    def gen_NAN_excel(self,data,foldername='',titlename='',save=True):
         """generate data frame describing the condition of NAN for variables in one file"""
         stat_data = pd.DataFrame(columns=['count_wnNAN'])
         stat_data['count_wnNAN'] = data.count()
         stat_data['percentage_wnNAN'] = data.count() / len(data)
         if save:
             self.saver.save_excel(data=stat_data,filename='{}_NAN.xlsx'.format(titlename),foldername=foldername)
-            # fold_path = os.path.join(self.datasavedir,'excel','{}'.format(foldername))
-            # save_path = self.check_savepath(foldpath=fold_path,filename='{}_NAN.xlsx'.format(titlename))
-            # writer = pd.ExcelWriter(save_path)
-            # stat_data.to_excel(writer, 'Sheet1')
-            # writer.save()
+
         return stat_data
 
     def gen_cat_var(self, data, Var_lst):
@@ -76,7 +75,7 @@ class Analyzer(object):
             self.saver.save_excel(data=df_feature,filename='Idf_Analysis_{}.docx'.format(varname),foldername=foldername)
         return df_feature
 
-    def ana_gapstat_kmeans(self,n_cluster_max,data_matrix,titlename,nrefs=10):
+    def ana_gapstat_kmeans(self,n_cluster_max,data_matrix,titlename,nrefs=5):
 
         gaps = np.zeros((len(range(1, n_cluster_max)),))
         resultsdf = pd.DataFrame({'clusterCount': [], 'gap': []})
@@ -328,3 +327,66 @@ class Analyzer(object):
         fold_path_doc = os.path.join(self.datasavedir,'doc','{}'.format(titlename))
         save_path_doc = self.check_savepath(foldpath=fold_path_doc,filename='Dist_{}.docx'.format(titlename))
         document.save(save_path_doc)
+
+    def split_cat(self,data,Var_lst):
+        """
+        split the multi choices into separate categories
+        :param data:
+        :return:
+        """
+        pattern = "[A-Z]"
+        new_data = data.fillna('NA')
+        result_data = pd.DataFrame()
+
+        for var in Var_lst:
+            cat_lst = []
+            # get the total categories and corresponding occurrence
+            for i in range(len(new_data)):
+                old_string = new_data[var].loc[i]
+                # split to list
+                cat_lst_tp = old_string.split('\n')
+                cat_lst_tp = [self.check_content_NL(i,pattern) for i in cat_lst_tp]
+
+                cat_lst.extend(cat_lst_tp)
+
+            cat_lst = list(set(cat_lst))
+            print(var,', length: ',len(cat_lst))
+            cat_pd = pd.DataFrame(cat_lst,columns=[var])
+
+            result_data= pd.concat([result_data,cat_pd],axis=1)
+
+        return result_data
+
+    def check_content_NL(self,inner_data,pattern):
+        # data : a string
+        # replace the punctuation with space
+        inner_new = inner_data.translate(str.maketrans(string.punctuation, ' ' * len(string.punctuation)))
+        word_lst = inner_new.split()
+        if any(i.isupper() for i in word_lst):
+            return ' '.join([ele.lower() for ele in word_lst])
+        else:
+            # detect the word with uppercase beginning
+            new_string = re.sub(pattern, lambda x: " " + x.group(0), inner_new).lower()
+            # remove the space at the beginning and the bottom
+            return ' '.join(new_string.split())
+
+    def get_distr_inter(self,data,Var_lst,filename, foldername=''):
+        """
+        get the distribution of the number of interventions
+        :param data: dataframe
+        :param Var_lst:
+        :return:
+        """
+        distr = data.groupby(Var_lst).size().reset_index(name='counts')
+        print(distr.head())
+        sns_plot = sns.distplot(distr['counts'])
+        sns_plot.set( ylabel='density',title=filename)
+        fold_path_img = os.path.join(self.datasavedir, 'img', '{}'.format(foldername))
+        save_path_img = self.check_savepath(foldpath=fold_path_img, filename='{}_dist.jpg'.format(filename))
+
+        plt.savefig(save_path_img)
+
+
+
+
+

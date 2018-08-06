@@ -47,6 +47,8 @@ Armoire_ARM_DIST = ['eq_DateDernierMaintenance','eq_DateCreation','arm_NoLampe']
 
 Armoire_CLUSTERING = ['eq_Code','arm_NoLampe','eq_Vetuste','eq_Commentaire']
 
+Armoire_MERGE = ['arm_NoLampe','eq_Vetuste','eq_Commentaire']
+
 ############################################################################################################################
 # all the variables of Point Lumineux
 PL_COORDONNEE = ['coor_X', 'coor_Y', 'coor_Projection']
@@ -116,6 +118,8 @@ PL_LAN_DIST = ['app_Puissance', 'lan_Hauteur', 'lampe_Puissance', 'lampe_Tension
 
 PL_CLUSTERING = ['eq_Code', 'pl_Reseau',  'pl_NoLanterne', 'lan_Vetuste', 'lampe_Puissance', 'lampe_Type']
 
+PL_MERGE = ['pl_Reseau',  'pl_NoLanterne', 'lan_Vetuste', 'lampe_Puissance', 'lampe_Type']
+
 ################################################################################################################################
 # all the variables of Intervention
 Int_PANNE = ['pan_Code', 'pan_DateSignal', 'pan_HeureSignal', 'pan_UtilisateurdDeclarant', 'pan_Declarant',
@@ -153,3 +157,9 @@ Int_INT_DIST = ['int_DateIntervention','int_NoPLimp','int_MoyenHumMob']
 Int_CLUSTERING = ['pan_Code', 'pan_CodeEqt', 'pan_DateSignal', 'pan_TypeEqt', 'pan_Solde', 'pan_Commentaire', 'pan_SourceEqt',
                   'pan_Defaut', 'pan_DelaiInt', 'int_DateIntervention', 'int_ElemDefaut', 'int_Fin', 'int_Solde',
                   'int_TypeInt', 'int_Defaut', 'int_Commentaire']
+
+# delete  int_Solde, int_Defaut, pan_Code, pan_SourceEqt, pan_DelaiInt
+# attention: there always be panne, but not for int
+Int_MERGE = ['pan_DateSignal', 'pan_Code', 'pan_TypeEqt', 'pan_Commentaire', 'pan_Defaut','pan_Solde',
+                  'int_DateIntervention', 'int_ElemDefaut', 'int_Fin',
+                  'int_Commentaire']
