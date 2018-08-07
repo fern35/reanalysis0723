@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import pickle
 
 class Saver(object):
     """docstring for Loader"""
@@ -29,4 +30,9 @@ class Saver(object):
         data.to_excel(writer, 'Sheet1')
         writer.save()
         return data
+
+    def save_pickle(self,data,filename,foldername=''):
+        fold_path = os.path.join(self.datasavedir,'pickle','{}'.format(foldername))
+        save_path = self.check_savepath(foldpath=fold_path,filename='{}.sav'.format(filename))
+        pickle.dump(data, open(save_path, 'wb'))
 

@@ -2,6 +2,7 @@ from modules.loader import Loader
 from modules.saver import Saver
 from modules.analyser import Analyzer
 from modules.cleaner import Cleaner
+from modules.plotter import Plotter
 from modules.preprocessor import Processor
 from modules.preprocessor import Processor
 import datetime as dt
@@ -9,6 +10,7 @@ import pandas as pd
 from utils.constants import Armoire_MERGE,Int_MERGE,PL_MERGE
 import sklearn.feature_selection
 from sklearn.feature_selection import f_regression, mutual_info_regression
+from scipy.cluster.hierarchy import linkage
 
 # the date of saving the data
 date_str='0723'
@@ -17,6 +19,7 @@ cleaner = Cleaner()
 loader = Loader(datestr=date_str)
 saver = Saver(datestr=date_str)
 processor = Processor(datestr=date_str)
+plotter = Plotter(datestr=date_str)
 
 data_downloadtime = dt.datetime(2018, 5, 15, 0, 0, 0, 0)
 data_starttime = dt.datetime(2013, 1, 1, 0, 0, 0, 0)
@@ -84,115 +87,245 @@ construct target label, encode categorical vars, create functions for dealing wi
 standardize numerical vars, 
 create a new df which only includes the interesting, transformed variables ==> feature dataframe
 """
+"""
+create new variables: delai_int(replace int_Fin),  int_Fin0-pan_DateSignal1, int_Fin1-pan_DateSignal2
+Armoire:
+"""
 ### create new variables: delai_int(replace int_Fin),  int_Fin0-pan_DateSignal1, int_Fin1-pan_DateSignal2
 ### Armoire:
 
 ## ADD NEW VARS
 # data_merge_select_Arm = loader.load_excel(filename='merge_ArmoireInt')
 # new_merge_ArmoireInt = processor.create_newvar(data_merge=data_merge_select_Arm)
-# saver.save_excel(data=new_merge_ArmoireInt,filename='merge_ArmInt_addnewvar',foldername='Encode')
+# saver.save_excel(data=new_merge_ArmoireInt,filename='merge_ArmInt_addnewvar',foldername='Encode/Armoire')
 # new_ArmInt_drop = new_merge_ArmoireInt.dropna(subset=['PanneDelai_1'])
-# saver.save_excel(data=new_ArmInt_drop,filename='merge_ArmInt_dropna_PanneDelai_1',foldername='Encode')
+# saver.save_excel(data=new_ArmInt_drop,filename='merge_ArmInt_dropna_PanneDelai_1',foldername='Encode/Armoire')
+
+# ## encode
+# ## the variables to encode:   (label is 'PanneDelai_1')
+# MERGE_ENCODE_Arm = ['arm_NoLampe','eq_Vetuste','eq_Commentaire',
+# 'pan_Commentaire_1','pan_Defaut_1','pan_Solde_1', 'int_ElemDefaut_1','int_Commentaire_1', 'DelaiInt_1',
+# 'pan_Commentaire_2','pan_Defaut_2','pan_Solde_2', 'int_ElemDefaut_2','int_Commentaire_2', 'DelaiInt_2', 'PanneDelai_2',
+# 'PanneDelai_1']
+# new_ArmInt_drop = loader.load_excel(filename='merge_ArmInt_dropna_PanneDelai_1',foldername='Encode/Armoire')
+# ## pick the variables
+# new_ArmInt_encode_pickvar = new_ArmInt_drop[MERGE_ENCODE_Arm]
+# ## encode numerical vars
+# ArmInt_encode = processor.num_encode(data=new_ArmInt_encode_pickvar,var='arm_NoLampe',proper_range=(0,300))
+# ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='DelaiInt_1',proper_range=(0,1500))
+# ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='DelaiInt_2',proper_range=(0,1500))
+# ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='PanneDelai_1',proper_range=(0,1500))
+# ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='PanneDelai_2',proper_range=(0,1500))
+# saver.save_excel(data=ArmInt_encode, filename='ArmInt_encode_num',foldername='Encode/Armoire')
+# ## encode categorical vars
+# ArmInt_encode = loader.load_excel(filename='ArmInt_encode_num',foldername='Encode/Armoire')
+# dict_encode_eq_Vetuste_Armoire, ArmInt_encode = processor.cat_encode(data=ArmInt_encode,var='eq_Vetuste',regroup_dict=None)
+# saver.save_pickle(data=dict_encode_eq_Vetuste_Armoire,filename='dict_encode_eq_Vetuste_Armoire')
+# dict_encode_pan_Solde_1_Armoire, ArmInt_encode = processor.cat_encode(data=ArmInt_encode, var='pan_Solde_1',
+#                                                             regroup_dict={'Solde':['Soldé'],
+#                                                                           'Nonsolde':['Mise en provisoire','Mise en sécurité','Problème non résolu','Mise en attente'],
+#                                                                           'Encours':['En cours']
+#                                                                           # ,'Else':['NA']
+#                                                                           })
+# saver.save_pickle(data=dict_encode_pan_Solde_1_Armoire,filename='dict_encode_pan_Solde_1_Armoire')
+# dict_encode_pan_Solde_2_Armoire, ArmInt_encode = processor.cat_encode(data=ArmInt_encode, var='pan_Solde_2',
+#                                                             regroup_dict={'Solde':['Soldé'],
+#                                                                           'Nonsolde':['Mise en provisoire','Mise en sécurité','Problème non résolu','Mise en attente']
+#                                                                           # ,'Encours':['En cours']
+#                                                                           ,'Else':['NA']
+#                                                                           })
+# saver.save_pickle(data=dict_encode_pan_Solde_2_Armoire,filename='dict_encode_pan_Solde_2_Armoire')
+# ArmInt_encode = processor.cat_multi_encode(data=ArmInt_encode,
+#                                            var='int_ElemDefaut_1',
+#                                            regroup_dict={'Nonelectric':['Crosse','Vasque','Support','Enveloppe exterieure','Coffret','Trappe'],
+#                                                          'Electric':['Câbles','Amorceur','Armoire départ','Ballast','Platine','Protection électrique','Lampe','Appareillage'],
+#                                                          'Else':['NA','Alimentation générale','Luminaire','Horloge']})
+# ArmInt_encode = processor.cat_multi_encode(data=ArmInt_encode,
+#                                            var='int_ElemDefaut_2',
+#                                            regroup_dict={'Nonelectric':['Crosse','Vasque','Support','Enveloppe exterieure','Coffret','Trappe'],
+#                                                          'Electric':['Câbles','Amorceur','Armoire départ','Ballast','Platine','Protection électrique','Lampe','Appareillage'],
+#                                                          'Else':['NA','Alimentation générale','Luminaire','Horloge']})
+# saver.save_excel(data=ArmInt_encode, filename='ArmInt_encode_cat',foldername='Encode/Armoire')
+#
+# ## encode NL vars
+# ArmInt_encode = loader.load_excel(filename='ArmInt_encode_cat',foldername='Encode/Armoire')
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='eq_Commentaire',max_feature=50)
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Commentaire_1',max_feature=50)
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Commentaire_2',max_feature=50)
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Defaut_1',max_feature=50)
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Defaut_2',max_feature=50)
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='int_Commentaire_1',max_feature=50)
+# ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='int_Commentaire_2',max_feature=50)
+# saver.save_excel(data=ArmInt_encode, filename='ArmInt_encode_NL',foldername='Encode/Armoire')
+# #
+# ## next we will score the variables , but not considering NL vars
+# ArmInt_encode = loader.load_excel(filename='ArmInt_encode_NL',foldername='Encode')
+# score_lst = ['arm_NoLampe','eq_Vetuste',
+# 'pan_Solde_1', 'int_ElemDefaut_1_Electric', 'int_ElemDefaut_1_Nonelectric','int_ElemDefaut_1_Else','DelaiInt_1',
+# 'pan_Solde_2', 'int_ElemDefaut_2_Electric', 'int_ElemDefaut_2_Nonelectric','int_ElemDefaut_2_Else','DelaiInt_2', 'PanneDelai_2']
+# discrete_lst = [False,True,
+#                 True,True,True,True,False,
+#                 True, True, True, True, False,False]
+# mi_MI = mutual_info_regression(ArmInt_encode[score_lst], ArmInt_encode['PanneDelai_1'],discrete_features=discrete_lst)
+# df_mi_MI = pd.DataFrame(columns=['feature','score'])
+# df_mi_MI['feature'] = score_lst
+# df_mi_MI['score'] = mi_MI
+# saver.save_excel(data=df_mi_MI,filename='feature_scoreMI_Armoire',foldername='Encode/Armoire')
+#
+# mi_F, pvalue_F = f_regression(ArmInt_encode[score_lst], ArmInt_encode['PanneDelai_1'],center=True)
+# print(mi_F)
+# df_mi_F = pd.DataFrame(columns=['feature','score','pvalue'])
+# df_mi_F['feature'] = score_lst
+# df_mi_F['score'] = mi_F
+# df_mi_F['pvalue'] = pvalue_F
+# saver.save_excel(data=df_mi_F,filename='feature_scoreF_Armoire',foldername='Encode/Armoire')
+
+"""
+create new variables: delai_int(replace int_Fin),  int_Fin0-pan_DateSignal1, int_Fin1-pan_DateSignal2
+PL
+"""
+## ADD NEW VARS
+# data_merge_select_PL = loader.load_excel(filename='merge_PLInt')
+# new_merge_PLInt = processor.create_newvar(data_merge=data_merge_select_PL)
+# saver.save_excel(data=new_merge_PLInt,filename='merge_PLInt_addnewvar',foldername='Encode/Int')
+# new_PLInt_drop = new_merge_PLInt.dropna(subset=['PanneDelai_1'])
+# saver.save_excel(data=new_PLInt_drop,filename='merge_PLInt_dropna_PanneDelai_1',foldername='Encode/PL')
 
 ## encode
 ## the variables to encode:   (label is 'PanneDelai_1')
-MERGE_ENCODE_Arm = ['arm_NoLampe','eq_Vetuste','eq_Commentaire',
-'pan_Commentaire_1','pan_Defaut_1','pan_Solde_1', 'int_ElemDefaut_1','int_Commentaire_1', 'DelaiInt_1',
-'pan_Commentaire_2','pan_Defaut_2','pan_Solde_2', 'int_ElemDefaut_2','int_Commentaire_2', 'DelaiInt_2', 'PanneDelai_2',
-'PanneDelai_1']
-new_ArmInt_drop = loader.load_excel(filename='merge_ArmInt_dropna_PanneDelai_1',foldername='Encode')
-## pick the variables
-new_ArmInt_encode_pickvar = new_ArmInt_drop[MERGE_ENCODE_Arm]
-## encode numerical vars
-ArmInt_encode = processor.num_encode(data=new_ArmInt_encode_pickvar,var='arm_NoLampe',proper_range=(0,300))
-ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='DelaiInt_1',proper_range=(0,1500))
-ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='DelaiInt_2',proper_range=(0,1500))
-ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='PanneDelai_1',proper_range=(0,1500))
-ArmInt_encode = processor.num_encode(data=ArmInt_encode,var='PanneDelai_2',proper_range=(0,1500))
-saver.save_excel(data=ArmInt_encode, filename='ArmInt_encode_num',foldername='Encode')
+# MERGE_ENCODE_PL = ['pl_Reseau','pl_NoLanterne','lan_Vetuste','lampe_Puissance','lampe_Type',
+# 'pan_Commentaire_1','pan_Defaut_1','pan_Solde_1', 'int_ElemDefaut_1','int_Commentaire_1', 'DelaiInt_1',
+# 'pan_Commentaire_2','pan_Defaut_2','pan_Solde_2', 'int_ElemDefaut_2','int_Commentaire_2', 'DelaiInt_2', 'PanneDelai_2',
+# 'PanneDelai_1']
+# new_PLInt_drop = loader.load_excel(filename='merge_PLInt_dropna_PanneDelai_1',foldername='Encode/PL')
+#
+# ## pick the variables
+# new_PLInt_encode_pickvar = new_PLInt_drop[MERGE_ENCODE_PL]
+# ## encode numerical vars
+# PL_encode = processor.num_encode(data=new_PLInt_encode_pickvar,var='pl_NoLanterne',proper_range=None)
+# PL_encode = processor.num_encode(data=PL_encode,var='lampe_Puissance',proper_range=(0,2000))
+# PL_encode = processor.num_encode(data=PL_encode,var='DelaiInt_1',proper_range=(0,1500))
+# PL_encode = processor.num_encode(data=PL_encode,var='DelaiInt_2',proper_range=(0,1500))
+# PL_encode = processor.num_encode(data=PL_encode,var='PanneDelai_1',proper_range=(0,1500))
+# PL_encode = processor.num_encode(data=PL_encode,var='PanneDelai_2',proper_range=(0,1500))
+# saver.save_excel(data=PL_encode, filename='PLInt_encode_num',foldername='Encode/PL')
+
 ## encode categorical vars
-ArmInt_encode = loader.load_excel(filename='ArmInt_encode_num',foldername='Encode')
-dict_encode_eq_Vetuste, ArmInt_encode = processor.cat_encode(data=ArmInt_encode,var='eq_Vetuste',regroup_dict=None)
-dict_encode_pan_Solde_1, ArmInt_encode = processor.cat_encode(data=ArmInt_encode, var='pan_Solde_1',
+PL_encode = loader.load_excel(filename='PLInt_encode_num',foldername='Encode/PL')
+dict_encode_pl_Reseau_PL, PL_encode = processor.cat_encode(data=PL_encode,var='pl_Reseau',regroup_dict=None)
+saver.save_pickle(data=dict_encode_pl_Reseau_PL,filename='dict_encode_pl_Reseau_PL')
+dict_encode_lan_Vetuste_PL, PL_encode = processor.cat_encode(data=PL_encode,var='lan_Vetuste',regroup_dict=None)
+saver.save_pickle(data=dict_encode_lan_Vetuste_PL,filename='dict_encode_lan_Vetuste_PL')
+dict_encode_lampe_Type_PL, PL_encode = processor.cat_encode(data=PL_encode,var='lampe_Type',
+                                                         regroup_dict={'SP':['SBP','SHP'], 'M':['IM','ML','COSMOWHITE'],
+                                                                       'F':['BF','Fluo'],'Else':['INC','HAL','LED','NA']})
+saver.save_pickle(data=dict_encode_lampe_Type_PL,filename='dict_encode_lampe_Type_PL')
+
+dict_encode_pan_Solde_1_PL, PL_encode = processor.cat_encode(data=PL_encode, var='pan_Solde_1',
+                                                            regroup_dict={'Solde':['Soldé'],
+                                                                          'Nonsolde':['Mise en provisoire','Mise en sécurité','Problème non résolu','Mise en attente'],
+                                                                          'Encours':['En cours']
+                                                                          # ,'Else':['NA']
+                                                                          })
+saver.save_pickle(data=dict_encode_pan_Solde_1_PL,filename='dict_encode_pan_Solde_1_PL')
+dict_encode_pan_Solde_2_PL, PL_encode = processor.cat_encode(data=PL_encode, var='pan_Solde_2',
                                                             regroup_dict={'Solde':['Soldé'],
                                                                           'Nonsolde':['Mise en provisoire','Mise en sécurité','Problème non résolu','Mise en attente'],
                                                                           'Encours':['En cours'],
                                                                           'Else':['NA']})
-print(dict_encode_pan_Solde_1)
-dict_encode_pan_Solde_2, ArmInt_encode = processor.cat_encode(data=ArmInt_encode, var='pan_Solde_2',
-                                                            regroup_dict={'Solde':['Soldé'],
-                                                                          'Nonsolde':['Mise en provisoire','Mise en sécurité','Problème non résolu','Mise en attente'],
-                                                                          'Encours':['En cours'],
-                                                                          'Else':['NA']})
-print(dict_encode_pan_Solde_2)
-ArmInt_encode = processor.cat_multi_encode(data=ArmInt_encode,
+saver.save_pickle(data=dict_encode_pan_Solde_2_PL,filename='dict_encode_pan_Solde_2_PL')
+PL_encode = processor.cat_multi_encode(data=PL_encode,
                                            var='int_ElemDefaut_1',
                                            regroup_dict={'Nonelectric':['Crosse','Vasque','Support','Enveloppe exterieure','Coffret','Trappe'],
                                                          'Electric':['Câbles','Amorceur','Armoire départ','Ballast','Platine','Protection électrique','Lampe','Appareillage'],
                                                          'Else':['NA','Alimentation générale','Luminaire','Horloge']})
-ArmInt_encode = processor.cat_multi_encode(data=ArmInt_encode,
+PL_encode = processor.cat_multi_encode(data=PL_encode,
                                            var='int_ElemDefaut_2',
                                            regroup_dict={'Nonelectric':['Crosse','Vasque','Support','Enveloppe exterieure','Coffret','Trappe'],
                                                          'Electric':['Câbles','Amorceur','Armoire départ','Ballast','Platine','Protection électrique','Lampe','Appareillage'],
                                                          'Else':['NA','Alimentation générale','Luminaire','Horloge']})
-saver.save_excel(data=ArmInt_encode, filename='ArmInt_encode_cat',foldername='Encode')
-
-## encode NL vars
-ArmInt_encode = loader.load_excel(filename='ArmInt_encode_cat',foldername='Encode')
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='eq_Commentaire',max_feature=50)
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Commentaire_1',max_feature=50)
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Commentaire_2',max_feature=50)
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Defaut_1',max_feature=50)
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='pan_Defaut_2',max_feature=50)
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='int_Commentaire_1',max_feature=50)
-ArmInt_encode = processor.NL_encode(data=ArmInt_encode,var='int_Commentaire_2',max_feature=50)
-saver.save_excel(data=ArmInt_encode, filename='ArmInt_encode_NL',foldername='Encode')
-
-## next we will score the variables , but not considering NL vars
-ArmInt_encode = loader.load_excel(filename='ArmInt_encode_NL',foldername='Encode')
-score_lst = ['arm_NoLampe','eq_Vetuste',
-'pan_Solde_1', 'int_ElemDefaut_1_Electric', 'int_ElemDefaut_1_Nonelectric','int_ElemDefaut_1_Else','DelaiInt_1',
-'pan_Solde_2', 'int_ElemDefaut_2_Electric', 'int_ElemDefaut_2_Nonelectric','int_ElemDefaut_2_Else','DelaiInt_2', 'PanneDelai_2']
-discrete_lst = [False,True,
-                True,True,True,True,False,
-                True, True, True, True, False,False]
-mi_MI = mutual_info_regression(ArmInt_encode[score_lst], ArmInt_encode['PanneDelai_1'],discrete_features=discrete_lst)
-df_mi_MI = pd.DataFrame(columns=['feature','score'])
-df_mi_MI['feature'] = score_lst
-df_mi_MI['score'] = mi_MI
-saver.save_excel(data=df_mi_MI,filename='feature_scoreMI_Armoire',foldername='Encode')
-
-mi_F, pvalue_F = f_regression(ArmInt_encode[score_lst], ArmInt_encode['PanneDelai_1'],center=True)
-print(mi_F)
-df_mi_F = pd.DataFrame(columns=['feature','score','pvalue'])
-df_mi_F['feature'] = score_lst
-df_mi_F['score'] = mi_F
-df_mi_F['pvalue'] = pvalue_F
-saver.save_excel(data=df_mi_F,filename='feature_scoreF_Armoire',foldername='Encode')
+saver.save_excel(data=PL_encode, filename='PL_encode_cat',foldername='Encode/PL')
 
 
+# encode NL vars
+PL_encode = loader.load_excel(filename='PL_encode_cat',foldername='Encode/PL')
+PL_encode = processor.NL_encode(data=PL_encode,var='pan_Commentaire_1',max_feature=50)
+PL_encode = processor.NL_encode(data=PL_encode,var='pan_Commentaire_2',max_feature=50)
+PL_encode = processor.NL_encode(data=PL_encode,var='pan_Defaut_1',max_feature=50)
+PL_encode = processor.NL_encode(data=PL_encode,var='pan_Defaut_2',max_feature=50)
+PL_encode = processor.NL_encode(data=PL_encode,var='int_Commentaire_1',max_feature=50)
+PL_encode = processor.NL_encode(data=PL_encode,var='int_Commentaire_2',max_feature=50)
+saver.save_excel(data=PL_encode, filename='PL_encode_NL',foldername='Encode/PL')
 
-
-
-### PL:
-## ADD NEW VARS
-data_merge_select_PL = loader.load_excel(filename='merge_PLInt')
-new_merge_PLInt = processor.create_newvar(data_merge=data_merge_select_PL)
-saver.save_excel(data=new_merge_PLInt,filename='merge_PLInt_addnewvar',foldername='Encode')
-new_PLInt_drop = new_merge_PLInt.dropna(subset=['PanneDelai_1'])
-saver.save_excel(data=new_PLInt_drop,filename='merge_PLInt_dropna_PanneDelai_1',foldername='Encode')
-
-## encode
-
-
-
-
-"""
-Rank the vars according to IG
-"""
-
-
+# ## next we will score the variables , but not considering NL vars
+# PL_encode = loader.load_excel(filename='PL_encode_NL',foldername='Encode/PL')
+# PL_score_lst = ['pl_Reseau','pl_NoLanterne','lan_Vetuste','lampe_Puissance','lampe_Type',
+# 'pan_Solde_1', 'int_ElemDefaut_1_Electric', 'int_ElemDefaut_1_Nonelectric','int_ElemDefaut_1_Else','DelaiInt_1',
+# 'pan_Solde_2', 'int_ElemDefaut_2_Electric', 'int_ElemDefaut_2_Nonelectric','int_ElemDefaut_2_Else','DelaiInt_2', 'PanneDelai_2']
+# discrete_lst = [True,True,True,False,True,
+#                 True,True,True,True,False,
+#                 True, True, True, True, False,False]
+# mi_MI = mutual_info_regression(PL_encode[PL_score_lst], PL_encode['PanneDelai_1'],discrete_features=discrete_lst)
+# df_mi_MI = pd.DataFrame(columns=['feature','score'])
+# df_mi_MI['feature'] = PL_score_lst
+# df_mi_MI['score'] = mi_MI
+# saver.save_excel(data=df_mi_MI,filename='feature_scoreMI_PL',foldername='Encode/PL')
+#
+# mi_F, pvalue_F = f_regression(PL_encode[PL_score_lst], PL_encode['PanneDelai_1'],center=True)
+# print(mi_F)
+# df_mi_F = pd.DataFrame(columns=['feature','score','pvalue'])
+# df_mi_F['feature'] = PL_score_lst
+# df_mi_F['score'] = mi_F
+# df_mi_F['pvalue'] = pvalue_F
+# saver.save_excel(data=df_mi_F,filename='feature_scoreF_PL',foldername='Encode/PL')
 
 """
 Clustering and visualization of the characteristics of the clusters
+"""
+""" Armoire
+"""
+# ## normalize numerical vars and turn categorical variables to one hot
+# ArmInt_encode = loader.load_excel(filename='ArmInt_encode_NL',foldername='Encode/Armoire')
+# ArmInt_cluster = processor.turn_onehot(data=ArmInt_encode,var='eq_Vetuste',namedict=dict_encode_eq_Vetuste_Armoire)
+# ArmInt_cluster = processor.turn_onehot(data=ArmInt_cluster,var='pan_Solde_1',namedict=dict_encode_pan_Solde_1_Armoire)
+# ArmInt_cluster = processor.turn_onehot(data=ArmInt_cluster,var='pan_Solde_2',namedict=dict_encode_pan_Solde_2_Armoire)
+#
+# ArmInt_cluster = processor.scale_num(data=ArmInt_cluster,var='arm_NoLampe')
+# ArmInt_cluster = processor.scale_num(data=ArmInt_cluster,var='DelaiInt_1')
+# ArmInt_cluster = processor.scale_num(data=ArmInt_cluster,var='DelaiInt_2')
+# ArmInt_cluster = processor.scale_num(data=ArmInt_cluster,var='PanneDelai_1')
+# ArmInt_cluster = processor.scale_num(data=ArmInt_cluster,var='PanneDelai_2')
+#
+# saver.save_excel(data=ArmInt_cluster,filename='ArmInt_cluster',foldername='Cluster')
+
+# ArmInt_cluster = loader.load_excel(filename='ArmInt_cluster',foldername='Cluster')
+# ArmInt_cluster.drop(['DelaiInt_1'], axis=1,inplace=True)
+# hcluster_Armoire = linkage(ArmInt_cluster, 'ward')
+# plotter.plot_dendro(hcluster_Armoire,'clustering','Dendrogram_Armoire')
+
+
+"""PL
+"""
+PL_encode = loader.load_excel(filename='PL_encode_NL',foldername='Encode/PL')
+PL_cluster = processor.turn_onehot(data=PL_encode,var='pl_Reseau',namedict=dict_encode_pl_Reseau_PL)
+PL_cluster = processor.turn_onehot(data=PL_cluster,var='lan_Vetuste',namedict=dict_encode_lan_Vetuste_PL)
+PL_cluster =processor.turn_onehot(data=PL_cluster,var='lampe_Type',namedict=dict_encode_lampe_Type_PL)
+PL_cluster = processor.turn_onehot(data=PL_cluster,var='pan_Solde_1',namedict=dict_encode_pan_Solde_1_PL)
+PL_cluster = processor.turn_onehot(data=PL_cluster,var='pan_Solde_2',namedict=dict_encode_pan_Solde_2_PL)
+
+PL_cluster = processor.scale_num(data=PL_cluster,var='pl_NoLanterne')
+PL_cluster = processor.scale_num(data=PL_cluster,var='lampe_Puissance')
+PL_cluster = processor.scale_num(data=PL_cluster,var='DelaiInt_1')
+PL_cluster = processor.scale_num(data=PL_cluster,var='DelaiInt_2')
+PL_cluster = processor.scale_num(data=PL_cluster,var='PanneDelai_1')
+PL_cluster = processor.scale_num(data=PL_cluster,var='PanneDelai_2')
+saver.save_excel(data=PL_cluster,filename='PL_cluster',foldername='Cluster')
+
+PL_cluster = loader.load_excel(filename='PL_cluster',foldername='Cluster')
+PL_cluster.drop(['DelaiInt_1'], axis=1,inplace=True)
+hcluster_PL = linkage(PL_cluster, 'ward')
+plotter.plot_dendro(hcluster_PL,'clustering','Dendrogram_PL')
+
+"""
+random forest
 """

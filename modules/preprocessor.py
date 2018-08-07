@@ -7,6 +7,7 @@ import os
 from utils.constants import VILLE_NAME
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.corpus import stopwords
+from sklearn.preprocessing import MinMaxScaler
 from utils.constants import Int_MERGE
 class Processor(object):
     def __init__(self, datestr,datasavedir=""):
@@ -207,28 +208,65 @@ class Processor(object):
             # remove the space at the beginning and the bottom
             return ' '.join(new_string.split())
 
-    def turn_onehot(self,data, var, n_len):
+    # def turn_onehot(self,data, var, n_len):
+    #     """
+    #     applied for one eqt
+    #     :param data:
+    #     :param var:
+    #     :param n_len:
+    #     :return:
+    #     """
+    #     # assert data.empty, 'the data for turning to one hot cannot be empty!'
+    #     new_data = data.copy()
+    #
+    #     onehot_encoder = OneHotEncoder()
+    #
+    #     onehot_encoder.fit(X=np.asarray(range(n_len))[:,np.newaxis])
+    #     array_encoded = onehot_encoder.transform(X=new_data[var].values.reshape(-1, 1)).toarray()
+    #
+    #     # col_num = len(array_encoded[0])
+    #     col_name = [var+'_code'+str(i) for i in range(n_len)]
+    #     df_encoded = pd.DataFrame(array_encoded,columns=col_name)
+    #     new_data.reset_index(drop=True, inplace=True)
+    #     new_data = pd.concat([new_data, df_encoded],axis=1)
+    #
+    #     return new_data
+
+    def turn_onehot(self,data,var,namedict):
         """
-        applied for one eqt
+        the data[var] should be like [0,0,0,1,2,3,2,....],
+        that is, deal with the data after processing for feature selection
         :param data:
         :param var:
-        :param n_len:
         :return:
         """
-        # assert data.empty, 'the data for turning to one hot cannot be empty!'
+
+        def takeSecond(elem):
+            return elem[1]
+
+        lst = list(namedict.items())
+        lst.sort(key=takeSecond)
+        namelst = [var+'_'+ele[0] for ele in lst]
+        print(namedict)
         new_data = data.copy()
         onehot_encoder = OneHotEncoder()
-
-        onehot_encoder.fit(X=np.asarray(range(n_len))[:,np.newaxis])
-        array_encoded = onehot_encoder.transform(X=new_data[var].values.reshape(-1, 1)).toarray()
-
-        # col_num = len(array_encoded[0])
-        col_name = [var+'_code'+str(i) for i in range(n_len)]
-        df_encoded = pd.DataFrame(array_encoded,columns=col_name)
+        onehot_array = onehot_encoder.fit_transform(new_data[var].to_frame()).toarray()
+        print('active_features_: ',onehot_encoder.active_features_)
+        len_col = onehot_array.shape[1]
+        assert len_col==len(namelst),'the length of namelst:{} is not equal to the shape[1] of onehot_array:{}'.format(len(namelst),len_col)
+        new_data.drop([var], axis=1,inplace=True)
+        df_varlst= pd.DataFrame(onehot_array,columns=namelst)
         new_data.reset_index(drop=True, inplace=True)
-        new_data = pd.concat([new_data, df_encoded],axis=1)
-
+        df_varlst.reset_index(drop=True, inplace=True)
+        new_data = pd.concat([df_varlst,new_data],axis=1)
         return new_data
+
+    def scale_num(self,data,var,scaler = MinMaxScaler()):
+        print('current variable: ', var)
+        new_data = data.copy()
+        new_data[var] = scaler.fit_transform(new_data[var].to_frame())
+        return new_data
+
 
     def reorder_Int(self, data, int_num, Var_Cat, Var_Num):
         Var_Cat_encode = Var_Cat.copy()

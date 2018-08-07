@@ -17,6 +17,15 @@ class Plotter(object):
         if not os.path.exists(self.savedir):
             os.makedirs(self.savedir)
 
+    def check_savepath(self,foldpath, filename):
+        if not os.path.exists(foldpath):
+            os.makedirs(foldpath)
+        save_path = os.path.join(foldpath,filename)
+        try:
+            os.remove(save_path)
+        except OSError:
+            pass
+        return save_path
 
     def plot_elbow(self,hcluster,foldername,title):
         last = hcluster[-40:, 2]
@@ -46,6 +55,9 @@ class Plotter(object):
             show_leaf_counts=True
         )
         plt.show()
-        fig.savefig(os.path.abspath(os.path.join(
-            self.savedir,foldername,'{}.png'.format(title))))
+        fold_path = os.path.join(
+            self.savedir,foldername)
+        save_path = self.check_savepath(foldpath=fold_path,filename='{}.png'.format(title))
+
+        fig.savefig(save_path)
 

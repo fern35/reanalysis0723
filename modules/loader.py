@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import pickle
 
 class Loader(object):
     """docstring for Loader"""
@@ -52,3 +53,16 @@ class Loader(object):
         excel_path = os.path.join(self.datasavedir, 'excel')
         data = pd.read_excel(os.path.join(excel_path, foldername,filename+'.xlsx'))
         return data
+
+    def load_pickle(self,filename,foldername=''):
+        """
+        load pickle file
+        """
+        load_path = os.path.join(self.datasavedir,'pickle','{}.sav'.format(filename))
+
+        if os.path.exists(load_path):
+            file_load = pickle.load(open(load_path,'rb'))
+            return file_load
+        else:
+            print('Not exist! ',load_path)
+            return

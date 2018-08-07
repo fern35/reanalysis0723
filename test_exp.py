@@ -42,7 +42,7 @@ NL vars
 ####### pan_Defaut, int_Defaut: mostly the same
 ####### check all the categories of lampe_Type, int_ElemDefaut, int_TypeTnt, int_TypeEqt, pan_TypeEqt, pan_Defaut, int_Defaut
 ####### save to excel
-data_Int = loader.load_excel(foldername='Int',filename='Int_allcities')
+# data_Int = loader.load_excel(foldername='Int',filename='Int_allcities')
 # data_PL = loader.load_excel(foldername='PL',filename='PL_allcities')
 # df_PL = analyzer.gen_cat_var(data=data_PL,Var_lst=['lampe_Type'])
 # df_Int = analyzer.gen_cat_var(data=data_Int,Var_lst=['int_ElemDefaut','int_TypeInt', 'int_TypeEqt',
@@ -106,3 +106,13 @@ decide the number of last interventions
 """
 
 # analyzer.get_distr_inter(data=data_Int,Var_lst=['int_CodeEqt','int_Ville'],filename='obser_eqt_Int')
+
+d = {'Vétuste': 0, 'Bon': 1, 'Moyen': 2, 'NA': 3, 'HS': 4}
+def takeSecond(elem):
+    return elem[1]
+lst = list(d.items())
+print(lst)
+lst.sort(key=takeSecond)
+print(lst)
+lst = [ele[0] for ele in lst]
+print(lst)
