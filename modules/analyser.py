@@ -15,6 +15,7 @@ import re
 import string
 import seaborn as sns
 
+
 class Analyzer(object):
     def __init__(self, datestr, datasavedir=""):
         if datasavedir == "":
@@ -386,7 +387,159 @@ class Analyzer(object):
 
         plt.savefig(save_path_img)
 
+    def split_cat_get_dist(self, data, var):
 
+        pattern = "[A-Z]"
+        new_data = data.fillna(value={var:'NA'})
+        new_data.reset_index(drop=True, inplace=True)
+        # result_data = pd.DataFrame()
+        result_dict = {}
+
+        # cat_lst = []
+        # get the total categories and corresponding occurrence
+        for i in range(len(new_data)):
+            old_string = new_data[var].loc[i]
+            # split to list
+            cat_lst_tp = old_string.split('\n')
+            cat_lst_tp = [self.check_content_NL(i, pattern) for i in cat_lst_tp]
+            for cat in cat_lst_tp:
+                result_dict[cat] = result_dict.get(cat, 0) + 1
+
+        result_dict.update((x, y / len(new_data)) for x, y in result_dict.items())
+        result_data = pd.Series(result_dict)
+        return result_data
+
+    def comp_Var_cluster(self,data,group_dict,n_cluster=3,foldername='Armoire'):
+        """
+        compare the distribution od the values of the features
+        :param data: the generated dataframe for clusters
+        :param group_dict: the dictionary for denoting the categories of features, example: {'CAT':[...], 'DIST':[...]}
+        :param foldername:
+        :return:
+        """
+        document = Document()
+        document.add_heading('compa_Cluster_{}'.format(foldername), 0)
+
+        var_lst = group_dict['CAT']+group_dict['DIST']+group_dict['MULTI']
+        for var in var_lst:
+            print('var: ',var)
+            clusterindex_strlst = ['cluster_'+str(i) for i in range(n_cluster)]
+            clusterindex_lst = [i for i in range(n_cluster)]
+            if var in group_dict['CAT']:
+                result_cat = pd.DataFrame(columns=clusterindex_strlst)
+                for cluster_index in clusterindex_lst:
+                    result_cat['cluster_'+str(cluster_index)] = data[data['cluster_index']==cluster_index][var].value_counts(dropna=False)/len(data)
+                # self.saver.save_excel(data=result_cat,filename='result_cat_{}_ncluster{}_{}'.format(var,n_cluster,foldername),foldername=foldername)
+                # if high variety of values, split the graph
+                if len(result_cat)>8:
+                    no_split = int(len(result_cat)/8)
+                    for i in range(no_split):
+                        plt.clf()
+                        result_cat.iloc[i*8:i*8+7,:].plot(kind='bar')
+                        plt.title('{} for {} ncluster={}_{}:{}'.format(var,n_cluster,foldername,i*8,i*8+7), fontsize=12)
+                        try:
+                            plt.tight_layout()
+                        except:
+                            print('Cannot use tight layout, var: ', var)
+
+                        plt.ylabel('percentage')
+                        fold_path_mul = os.path.join(self.datasavedir,'img','cluster_var')
+                        save_path_mul = self.check_savepath(foldpath=fold_path_mul,filename='{}_ncluster{}_{}_{}:{}.jpg'.format(foldername,n_cluster,var,i*8,i*8+7))
+                        plt.savefig(save_path_mul)
+                        document.add_picture(save_path_mul,
+                                             width=Inches(4.5))
+                    plt.clf()
+                    result_cat.iloc[no_split*8:,:].plot(kind='bar')
+                    plt.title('{} for {} ncluster={}_{}:{}'.format(var, n_cluster,foldername,no_split*8,len(result_cat)-1), fontsize=12)
+                    try:
+                        plt.tight_layout()
+                    except:
+                        print('Cannot use tight layout, var: ', var)
+
+                    plt.ylabel('percentage')
+
+                    fold_path_last = os.path.join(self.datasavedir, 'img', 'cluster_var')
+                    save_path_last = self.check_savepath(foldpath=fold_path_last,
+                                                        filename='{}_cluster{}_{}_{}:{}.jpg'.format(foldername, n_cluster,var,no_split*8,len(result_cat)-1))
+                    plt.savefig(save_path_last)
+                    document.add_picture(save_path_last,width=Inches(4.5))
+
+                else:
+                    plt.clf()
+                    result_cat.plot(kind='bar')
+                    plt.title('{} for {} ncluster={}'.format(var,foldername,n_cluster), fontsize=12)
+                    try:
+                        plt.tight_layout()
+                    except:
+                        print('Cannot use tight layout, var: ',var)
+
+                    plt.ylabel('percentage')
+                    fold_path_img = os.path.join(self.datasavedir, 'img', 'cluster_var')
+                    save_path_img = self.check_savepath(foldpath=fold_path_img,
+                                                        filename='{}_cluster{}_{}.jpg'.format(foldername,n_cluster,var))
+
+                    plt.savefig(save_path_img)
+                    document.add_picture(save_path_img,
+                                         width=Inches(4.5))
+            elif var in group_dict['DIST']:
+                result_dist = pd.DataFrame(columns=clusterindex_strlst)
+                for cluster_index in clusterindex_lst:
+                    data_tp = data[data['cluster_index']==cluster_index]
+                    data_tp.reset_index(drop=True, inplace=True)
+                    result_dist['cluster_'+str(cluster_index)] = data_tp[var]
+                plt.clf()
+
+                filtered_dist = result_dist.dropna(axis='columns', how='all')
+
+                if len(result_dist.columns) > len(filtered_dist.columns):
+                    print('Some clusters don\'t have the values for {} (n_cluster={})!'.format(var,n_cluster))
+                    self.saver.save_excel(data=result_dist, filename='Strange_{}_cluster{}'.format(var, n_cluster),
+                                          foldername=foldername)
+                    result_dist = filtered_dist
+                else:
+                    pass
+
+                result_dist.plot(kind='density')
+                plt.title('{} for {} ncluster={}'.format(var, foldername, n_cluster), fontsize=12)
+                try:
+                    plt.tight_layout()
+                except:
+                    print('Cannot use tight layout, var: ', var)
+
+                plt.ylabel('density')
+                fold_path_img_var = os.path.join(self.datasavedir, 'img', 'cluster_var')
+                save_path_img_var = self.check_savepath(foldpath=fold_path_img_var,
+                                                        filename='{}_cluster{}_{}.jpg'.format(foldername, n_cluster,
+                                                                                              var))
+                plt.savefig(save_path_img_var)
+                document.add_picture(save_path_img_var,
+                                     width=Inches(4.5))
+            else: # 'MULTI'
+                result_multi = pd.DataFrame(columns=clusterindex_strlst)
+                for cluster_index in clusterindex_lst:
+                    result_multi['cluster_'+str(cluster_index)] = self.split_cat_get_dist(data=data[data['cluster_index']==cluster_index],var=var)
+
+                plt.clf()
+                result_multi.plot(kind='bar')
+                plt.title('{} for {} ncluster={}'.format(var, foldername, n_cluster), fontsize=12)
+                try:
+                    plt.tight_layout()
+                except:
+                    print('Cannot use tight layout, var: ', var)
+
+                plt.ylabel('percentage')
+                fold_path_img = os.path.join(self.datasavedir, 'img', 'cluster_var')
+                save_path_img = self.check_savepath(foldpath=fold_path_img,
+                                                    filename='{}_cluster{}_{}.jpg'.format(foldername, n_cluster, var))
+
+                plt.savefig(save_path_img)
+                document.add_picture(save_path_img,
+                                     width=Inches(4.5))
+
+
+        fold_path_doc = os.path.join(self.datasavedir,'doc','{}'.format(foldername))
+        save_path_doc = self.check_savepath(foldpath=fold_path_doc,filename='compa_cluster{}_{}.docx'.format(n_cluster,foldername))
+        document.save(save_path_doc)
 
 
 

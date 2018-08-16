@@ -49,6 +49,12 @@ Armoire_CLUSTERING = ['eq_Code','arm_NoLampe','eq_Vetuste','eq_Commentaire']
 
 Armoire_MERGE = ['arm_NoLampe','eq_Vetuste','eq_Commentaire']
 
+Armoire_CLUSTER_COMP = {'CAT':['region','eq_Vetuste','pan_Solde_0',
+                          'pan_Solde_1'],
+                   'DIST':['arm_NoLampe','pan_DateSignal_0','int_DateIntervention_0',
+                           'PanneDelai_1','PanneDelai_2'],
+                   'MULTI': ['int_ElemDefaut_0','int_ElemDefaut_1']}
+
 ############################################################################################################################
 # all the variables of Point Lumineux
 PL_COORDONNEE = ['coor_X', 'coor_Y', 'coor_Projection']
@@ -163,3 +169,9 @@ Int_CLUSTERING = ['pan_Code', 'pan_CodeEqt', 'pan_DateSignal', 'pan_TypeEqt', 'p
 Int_MERGE = ['pan_DateSignal', 'pan_Code', 'pan_TypeEqt', 'pan_Commentaire', 'pan_Defaut','pan_Solde',
                   'int_DateIntervention', 'int_ElemDefaut', 'int_Fin',
                   'int_Commentaire']
+
+PL_CLUSTER_COMP = {'CAT':['region','pl_Reseau','lampe_Type','lan_Vetuste','pan_Solde_0',
+                          'pan_Solde_1'],
+                   'DIST':['pl_NoLanterne','lampe_Puissance','pan_DateSignal_0','int_DateIntervention_0',
+                           'PanneDelai_1','PanneDelai_2'],
+                   'MULTI': ['int_ElemDefaut_0','int_ElemDefaut_1']}

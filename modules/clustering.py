@@ -22,36 +22,6 @@ class Cluster(object):
         else:
             self.datasavedir = datasavedir
 
-    def add_Int(self, data_row, data_Int, int_num=3,Var_Cat= {'pan_Solde':3, 'int_Solde':4}, Var_Num=['pan_DateSignal','int_DateIntervention','int_Fin']):
-        """
-
-        :param data_row:
-        :param data_Int:
-        :param int_num:
-        :param one_hot:
-        :param Var_Cat: a dict which denotes the categorical variables and the number of categories
-        :param Var_Num: a list of numerical variables which have preprocessed (add NA, add clip)
-        :return:
-        """
-        assert isinstance(Var_Cat, dict), 'Var_Cat should be a dict !'
-        assert isinstance(Var_Num,list), 'Var_Num should be a list !'
-
-        new_data = data_row.copy()
-        data_pick = data_Int.loc[(data_Int['pan_CodeEqt'] == new_data['eq_Code']) & (data_Int['region'] == new_data['region'])]
-
-        # attention! if concanate eqt with intervention, deal with the index!
-        data_int = self.reorder_Int(data=data_pick, int_num=int_num, Var_Cat=Var_Cat, Var_Num=Var_Num)
-        data_int_series = data_int.iloc[0]
-
-        # add the info of intervention (turned to string)
-        data_pick_str = pd.Series([data_pick[list(Var_Cat.keys())+Var_Num].to_string()], index=['int_Info'])
-
-
-        new_data = pd.concat([data_pick_str, new_data, data_int_series], axis=0)
-
-        return new_data
-
-
     def getcontent_kmeans_index(self, data, k_means, cluster_index,colnames):
         """
         Get the emails from the cluster index (after Kmeans)
