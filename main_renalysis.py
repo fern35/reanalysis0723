@@ -418,14 +418,26 @@ correlation between variables
 """
 random forest
 """
-ArmInt_cluster = loader.load_excel(filename='ArmInt_cluster',foldername='Cluster')
-ArmInt_num = loader.load_excel(filename='ArmInt_encode_num',foldername='Encode/Armoire')
-ArmInt_num.reset_index(drop=True,inplace=True)
-ArmInt_cluster[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']] = ArmInt_num[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']]
-# print(ArmInt_cluster[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']].head())
-y = pd.DataFrame(ArmInt_cluster['PanneDelai_1']).values
-ArmInt_cluster.drop(['PanneDelai_1'], axis=1,inplace=True)
-X = ArmInt_cluster.values
-
+# ArmInt_cluster = loader.load_excel(filename='ArmInt_cluster',foldername='Cluster')
+# ArmInt_num = loader.load_excel(filename='ArmInt_encode_num',foldername='Encode/Armoire')
+# ArmInt_num.reset_index(drop=True,inplace=True)
+# ArmInt_cluster[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']] = ArmInt_num[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']]
+# # print(ArmInt_cluster[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']].head())
+# y = pd.DataFrame(ArmInt_cluster['PanneDelai_1']).values
+# ArmInt_cluster.drop(['PanneDelai_1'], axis=1,inplace=True)
+# X = ArmInt_cluster.values
+#
 # modeler.train_RandomForest(X=X,y=y,title='Armoire')
-modeler.train_GradientBoosting(X=X,y=y,title='Armoire')
+# modeler.train_GradientBoosting(X=X,y=y,title='Armoire')
+
+PL_cluster = loader.load_excel(filename='PL_cluster',foldername='Cluster')
+PL_num = loader.load_excel(filename='PLInt_encode_num',foldername='Encode/PL')
+PL_num.reset_index(drop=True,inplace=True)
+PL_cluster[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']] = PL_num[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']]
+# print(ArmInt_cluster[['PanneDelai_1','DelaiInt_1','PanneDelai_2','DelaiInt_2']].head())
+y = pd.DataFrame(PL_cluster['PanneDelai_1']).values
+PL_cluster.drop(['PanneDelai_1'], axis=1,inplace=True)
+X = PL_cluster.values
+
+modeler.train_RandomForest(X=X,y=y,title='PL')
+modeler.train_GradientBoosting(X=X,y=y,title='PL')

@@ -541,5 +541,24 @@ class Analyzer(object):
         save_path_doc = self.check_savepath(foldpath=fold_path_doc,filename='compa_cluster{}_{}.docx'.format(n_cluster,foldername))
         document.save(save_path_doc)
 
+    def plot_feature_importance(self,importances,featurenames,title,top_n=30):
+        indices = np.argsort(importances)[::-1]
+        plt.clf()
+        plt.figure()
+        plt.title(title)
+        feature_plot = featurenames[indices][:top_n]
+        print(feature_plot)
+
+        plt.barh(range(top_n), importances[indices][:top_n],
+                color="r",
+                # yerr=std[indices],
+                align="center")
+        plt.yticks(range(top_n), feature_plot[:top_n])
+        plt.ylim([-1, top_n])
+        plt.tight_layout()
+        fold_path = os.path.join(self.datasavedir,'img','model')
+        save_path = self.check_savepath(foldpath=fold_path,filename='{}.jpg'.format(title))
+        plt.savefig(save_path)
+        plt.show()
 
 

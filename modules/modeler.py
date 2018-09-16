@@ -5,6 +5,8 @@ from sklearn.metrics import mean_squared_error
 from docx import Document
 import os
 import numpy as np
+import pandas as pd
+from modules.saver import Saver
 
 
 class Modeler(object):
@@ -16,6 +18,7 @@ class Modeler(object):
                 os.path.join(self.basedir, '..','..','data_save{}'.format(datestr)))
         else:
             self.datasavedir = datasavedir
+        self.saver = Saver(datestr)
 
 
     def check_savepath(self,foldpath, filename):
@@ -65,7 +68,11 @@ class Modeler(object):
             document.add_paragraph("The scores are computed on the full evaluation set")
 
             y_true, y_pred = np.squeeze(y_test).tolist(), clf.predict(X_test).tolist()
+            print(clf.best_estimator_.feature_importances_)
+            self.saver.save_pickle(data=clf,filename='Randomforest_{}'.format(title))
 
+            pre_test = pd.DataFrame({'y_true':y_true,'y_pre':y_pred})
+            self.saver.save_excel(pre_test,filename='predictions_randomforest',foldername='Model')
             document.add_paragraph(str(mean_squared_error(y_true, y_pred)))
             fold_path = os.path.join(self.datasavedir, 'doc', 'Model')
             save_path = self.check_savepath(foldpath=fold_path, filename='{}_RandomForest_{}.docx'.format(title,score))
@@ -107,6 +114,11 @@ class Modeler(object):
             document.add_paragraph("The scores are computed on the full evaluation set")
 
             y_true, y_pred = np.squeeze(y_test).tolist(), clf.predict(X_test).tolist()
+            print(clf.best_estimator_.feature_importances_)
+            self.saver.save_pickle(data=clf, filename='GradientBoosting_{}'.format(title))
+
+            pre_test = pd.DataFrame({'y_true':y_true,'y_pre':y_pred})
+            self.saver.save_excel(pre_test,filename='predictions_gradientboosting',foldername='Model')
 
             document.add_paragraph(str(mean_squared_error(y_true, y_pred)))
             fold_path = os.path.join(self.datasavedir, 'doc', 'Model')
